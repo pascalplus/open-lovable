@@ -26,8 +26,6 @@ import HeroInputSubmitButton from "@/components/app/(home)/sections/hero-input/B
 import HeaderBrandKit from "@/components/shared/header/BrandKit/BrandKit";
 import HeaderWrapper from "@/components/shared/header/Wrapper/Wrapper";
 import HeaderDropdownWrapper from "@/components/shared/header/Dropdown/Wrapper/Wrapper";
-import GithubIcon from "@/components/shared/header/Github/_svg/GithubIcon";
-import ButtonUI from "@/components/ui/shadcn/button"
 
 interface SearchResult {
   url: string;
@@ -235,18 +233,6 @@ export default function HomePage() {
               <div className="flex gap-24 items-center">
                 <HeaderBrandKit />
               </div>
-              <div className="flex gap-8">
-                <a
-                  className="contents"
-                  href="https://github.com/mendableai/open-lovable"
-                  target="_blank"
-                >
-                  <ButtonUI variant="tertiary">
-                    <GithubIcon />
-                    Use this Template
-                  </ButtonUI>
-                </a>
-              </div>
             </div>
           </HeaderWrapper>
         </div>
@@ -294,6 +280,23 @@ export default function HomePage() {
                       "0px 0px 44px 0px rgba(0, 0, 0, 0.02), 0px 88px 56px -20px rgba(0, 0, 0, 0.03), 0px 56px 56px -20px rgba(0, 0, 0, 0.02), 0px 32px 32px -20px rgba(0, 0, 0, 0.03), 0px 16px 24px -12px rgba(0, 0, 0, 0.03), 0px 0px 0px 1px rgba(0, 0, 0, 0.05), 0px 0px 0px 10px #F9F9F9",
                   }}
                 >
+                  <div className="px-[28px] pt-[24px] flex items-center gap-12">
+                    <label htmlFor="home-model-picker" className="text-label-medium text-gray-500 whitespace-nowrap">
+                      Model
+                    </label>
+                    <select
+                      id="home-model-picker"
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                      className="flex-1 min-w-0 px-3 py-2.5 text-xs font-medium text-gray-700 bg-gray-50 rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    >
+                      {models.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                 <div className="p-[28px] flex gap-12 items-center w-full relative bg-white rounded-20">
                   {/* Show different UI when search results are displayed */}
@@ -525,19 +528,6 @@ export default function HomePage() {
                       <div className={`flex items-center gap-3 mt-2 pb-4 transition-all duration-300 transform ${
                         isValidUrl ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
                       }`} style={{ transitionDelay: '400ms' }}>
-                        {/* Model Dropdown */}
-                        <select
-                          value={selectedModel}
-                          onChange={(e) => setSelectedModel(e.target.value)}
-                          className={`px-3 py-2.5 text-xs font-medium text-gray-700 bg-white rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 ${extendBrandStyles ? 'flex-1' : ''}`}
-                        >
-                          {models.map((model) => (
-                            <option key={model.id} value={model.id}>
-                              {model.name}
-                            </option>
-                          ))}
-                        </select>
-
                         {/* Additional Instructions - Hidden when extend brand styles is enabled */}
                         {!extendBrandStyles && (
                           <input
