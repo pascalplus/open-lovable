@@ -45,6 +45,11 @@ const openai = createOpenAI({
   baseURL: isUsingAIGateway ? aiGatewayBaseURL : process.env.OPENAI_BASE_URL,
 });
 
+const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+});
+
 // Helper function to analyze user preferences from conversation history
 function analyzeUserPreferences(messages: ConversationMessage[]): {
   commonPatterns: string[];
@@ -1217,11 +1222,12 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
         const isAnthropic = model.startsWith('anthropic/');
         const isGoogle = model.startsWith('google/');
         const isOpenAI = model.startsWith('openai/');
+        const isOpenRouter = model === 'openrouter/free';
         const isKimiGroq = model === 'moonshotai/kimi-k2-instruct-0905';
-        const modelProvider = isAnthropic ? anthropic : 
-                              (isOpenAI ? openai : 
-                              (isGoogle ? googleGenerativeAI : 
-                              (isKimiGroq ? groq : groq)));
+        const modelProvider = isAnthropic ? anthropic :
+                              (isOpenAI ? openai :
+                              (isGoogle ? googleGenerativeAI :
+                              (isOpenRouter ? openrouter : groq)));
         
         // Fix model name transformation for different providers
         let actualModel: string;
@@ -1232,6 +1238,8 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
         } else if (isKimiGroq) {
           // Kimi on Groq - use full model string
           actualModel = 'moonshotai/kimi-k2-instruct-0905';
+        } else if (isOpenRouter) {
+          actualModel = 'openrouter/free';
         } else if (isGoogle) {
           // Google uses specific model names - convert our naming to theirs  
           actualModel = model.replace('google/', '');
@@ -1239,7 +1247,7 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
           actualModel = model;
         }
 
-        console.log(`[generate-ai-code-stream] Using provider: ${isAnthropic ? 'Anthropic' : isGoogle ? 'Google' : isOpenAI ? 'OpenAI' : 'Groq'}, model: ${actualModel}`);
+        console.log(`[generate-ai-code-stream] Using provider: ${isAnthropic ? 'Anthropic' : isGoogle ? 'Google' : isOpenAI ? 'OpenAI' : isOpenRouter ? 'OpenRouter' : 'Groq'}, model: ${actualModel}`);
         console.log(`[generate-ai-code-stream] AI Gateway enabled: ${isUsingAIGateway}`);
         console.log(`[generate-ai-code-stream] Model string: ${model}`);
 
@@ -1275,7 +1283,7 @@ Examples of SYNTAX ERRORS (NEVER DO THIS):
 ❌ className="px-4 py-2 bg-blue-600 hover:bg-blue-7...
 ❌ <button className="btn btn-primary btn-...
 ❌ const title = "Welcome to our...
-❌ import { useState, useEffect, ... } from 'react'
+��� import { useState, useEffect, ... } from 'react'
 
 Examples of CORRECT CODE (ALWAYS DO THIS):
 ✅ className="px-4 py-2 bg-blue-600 hover:bg-blue-700"
@@ -1356,11 +1364,11 @@ It's better to have 3 complete files than 10 incomplete files.`
               // Wait before retry with exponential backoff
               await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
               
-              // If Groq fails, try switching to a fallback model
-              if (isGroqServiceError && retryCount === maxRetries) {
-                console.log('[generate-ai-code-stream] Groq service unavailable, falling back to GPT-4');
-                streamOptions.model = openai('gpt-4-turbo');
-                actualModel = 'gpt-4-turbo';
+              // If Groq fails, retry once through OpenRouter's free router.
+              if (isKimiGroq && retryCount === maxRetries) {
+                console.log('[generate-ai-code-stream] Kimi/Groq request failed, falling back to OpenRouter free router');
+                streamOptions.model = openrouter('openrouter/free');
+                actualModel = 'openrouter/free';
               }
             } else {
               // Final error, send to user
