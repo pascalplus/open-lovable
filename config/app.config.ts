@@ -51,7 +51,7 @@ export const appConfig = {
   // AI Model Configuration
   ai: {
     // Default AI model
-    defaultModel: 'google/gemini-3-pro-preview',
+    defaultModel: 'moonshotai/kimi-k2-instruct-0905',
     
     // Available models
     availableModels: [

@@ -22,11 +22,16 @@ const aiGatewayApiKey = process.env.AI_GATEWAY_API_KEY;
 const aiGatewayBaseURL = 'https://ai-gateway.vercel.sh/v1';
 const isUsingAIGateway = !!aiGatewayApiKey;
 
+function usesAIGateway(provider: ProviderName): boolean {
+  // Kimi is intentionally pinned to Groq direct, never routed through AI Gateway.
+  return isUsingAIGateway && provider !== 'groq';
+}
+
 // Cache provider clients by a stable key to avoid recreating
 const clientCache = new Map<string, ProviderClient>();
 
 function getEnvDefaults(provider: ProviderName): { apiKey?: string; baseURL?: string } {
-  if (isUsingAIGateway) {
+  if (usesAIGateway(provider)) {
     return { apiKey: aiGatewayApiKey, baseURL: aiGatewayBaseURL };
   }
 
@@ -46,7 +51,7 @@ function getEnvDefaults(provider: ProviderName): { apiKey?: string; baseURL?: st
 }
 
 function getOrCreateClient(provider: ProviderName, apiKey?: string, baseURL?: string): ProviderClient {
-  const effective = isUsingAIGateway
+  const effective = usesAIGateway(provider)
     ? { apiKey: aiGatewayApiKey, baseURL: aiGatewayBaseURL }
     : { apiKey, baseURL };
 
