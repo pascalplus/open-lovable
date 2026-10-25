@@ -51,7 +51,7 @@ export const appConfig = {
   // AI Model Configuration
   ai: {
     // Default AI model
-    defaultModel: 'google/gemini-3-pro-preview',
+    defaultModel: 'moonshotai/kimi-k2-instruct-0905',
     
     // Available models
     availableModels: [
@@ -74,6 +74,12 @@ export const appConfig = {
       'moonshotai/kimi-k2-instruct-0905': {
         provider: 'groq',
         model: 'moonshotai/kimi-k2-instruct-0905'
+      },
+      'openrouter/free': {
+        provider: 'openrouter',
+        model: 'openrouter/free',
+        apiKey: process.env.OPENROUTER_API_KEY,
+        baseURL: 'https://openrouter.ai/api/v1'
       }
     },
     

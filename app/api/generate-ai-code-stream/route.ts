@@ -25,8 +25,9 @@ console.log('[generate-ai-code-stream] AI Gateway config:', {
 });
 
 const groq = createGroq({
-  apiKey: process.env.AI_GATEWAY_API_KEY ?? process.env.GROQ_API_KEY,
-  baseURL: isUsingAIGateway ? aiGatewayBaseURL : undefined,
+  // Kimi must use Groq directly; do not route it through AI Gateway.
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: process.env.GROQ_BASE_URL,
 });
 
 const anthropic = createAnthropic({
@@ -90,7 +91,7 @@ declare global {
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, model = 'openai/gpt-oss-20b', context, isEdit = false } = await request.json();
+    const { prompt, model = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
     
     console.log('[generate-ai-code-stream] Received request:');
     console.log('[generate-ai-code-stream] - prompt:', prompt);
