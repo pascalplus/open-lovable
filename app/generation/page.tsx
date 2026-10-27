@@ -3036,13 +3036,15 @@ Focus on the key sections and content, making it clean and modern.`;
         const decoder = new TextDecoder();
         let generatedCode = '';
         let explanation = '';
+        let pendingSseBuffer = '';
         
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          pendingSseBuffer += decoder.decode(value, { stream: true });
+          const lines = pendingSseBuffer.split('\n');
+          pendingSseBuffer = lines.pop() || '';
           
           for (const line of lines) {
             if (line.startsWith('data: ')) {
