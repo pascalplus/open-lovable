@@ -42,7 +42,7 @@ export class E2BProvider extends SandboxProvider {
 
       // Create base sandbox
       this.sandbox = await Sandbox.create({ 
-        apiKey: this.config.e2b?.apiKey || process.env.E2B_API_KEY,
+        apiKey: this.config.e2b?.apiKey || process.env.key,
         timeoutMs: this.config.e2b?.timeoutMs || appConfig.e2b.timeoutMs
       });
       

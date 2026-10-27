@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
 
     // Parse the AI response
     const parsed = parseAIResponse(response);
-    const morphEnabled = Boolean(isEdit && process.env.MORPH_API_KEY);
+    const morphEnabled = false;
     const morphEdits = morphEnabled ? parseMorphEdits(response) : [];
     console.log('[apply-ai-code-stream] Morph Fast Apply mode:', morphEnabled);
     if (morphEnabled) {

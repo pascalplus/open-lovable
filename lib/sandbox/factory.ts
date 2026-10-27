@@ -27,7 +27,7 @@ export class SandboxFactory {
   static isProviderAvailable(provider: string): boolean {
     switch (provider.toLowerCase()) {
       case 'e2b':
-        return !!process.env.E2B_API_KEY;
+        return !!process.env.key;
       
       case 'vercel':
         // Vercel can use OIDC (automatic) or PAT
