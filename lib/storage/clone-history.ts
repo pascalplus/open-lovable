@@ -68,7 +68,7 @@ export async function saveCloneResult(input: {
 }) {
   const resultId = crypto.randomUUID();
   const safePath = (filePath: string) => {
-    const normalized = filePath.replaceAll('\\\\', '/').replace(/^\\/+/, '');
+    const normalized = filePath.replaceAll('\\\\', '/').replace(/^\/+/, '');
     const segments = normalized.split('/').filter((segment) => segment && segment !== '.' && segment !== '..');
     return segments.length > 0 ? segments.join('/') : 'unnamed-file';
   };
