@@ -9,6 +9,7 @@ import { executeSearchPlan, formatSearchResultsForAI, selectTargetFile } from '@
 import { FileManifest } from '@/types/file-manifest';
 import type { ConversationState, ConversationMessage, ConversationEdit } from '@/types/conversation';
 import { appConfig } from '@/config/app.config';
+import { recordCloneAction } from '@/lib/storage/clone-history';
 
 // Force dynamic route to enable streaming
 export const dynamic = 'force-dynamic';
@@ -87,8 +88,10 @@ declare global {
 }
 
 export async function POST(request: NextRequest) {
+  let cloneRequest: { prompt?: string; model?: string; context?: { targetUrl?: string; sourceUrl?: string } } = {};
   try {
     const { prompt, model = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
+    cloneRequest = { prompt, model, context };
     
     console.log('[generate-ai-code-stream] Received request:');
     console.log('[generate-ai-code-stream] - prompt:', prompt);
@@ -96,6 +99,16 @@ export async function POST(request: NextRequest) {
     console.log('[generate-ai-code-stream] - context.sandboxId:', context?.sandboxId);
     console.log('[generate-ai-code-stream] - context.currentFiles:', context?.currentFiles ? Object.keys(context.currentFiles) : 'none');
     console.log('[generate-ai-code-stream] - currentFiles count:', context?.currentFiles ? Object.keys(context.currentFiles).length : 0);
+
+    const cloneUrl = context?.targetUrl || context?.sourceUrl || prompt.match(/https?:\/\/[^\s)]+/)?.[0] || prompt;
+    void recordCloneAction({
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      url: cloneUrl,
+      model,
+      result: 'started',
+      metadata: { isEdit, sandboxId: context?.sandboxId },
+    }).catch((historyError) => console.error('[clone-history] Failed to record start:', historyError));
     
     // Initialize conversation state if not exists
     if (!global.conversationState) {
@@ -1810,6 +1823,15 @@ Provide the complete file content without any truncation. Include all necessary 
           packagesToInstall: packagesToInstall.length > 0 ? packagesToInstall : undefined,
           warnings: truncationWarnings.length > 0 ? truncationWarnings : undefined
         });
+
+        void recordCloneAction({
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          url: cloneUrl,
+          model,
+          result: 'success',
+          metadata: { isEdit, sandboxId: context?.sandboxId, files: files.length, components: componentCount },
+        }).catch((historyError) => console.error('[clone-history] Failed to record success:', historyError));
         
         // Track edit in conversation history
         if (isEdit && editContext && global.conversationState) {
@@ -1878,6 +1900,16 @@ Provide the complete file content without any truncation. Include all necessary 
     
   } catch (error) {
     console.error('[generate-ai-code-stream] Error:', error);
+    if (cloneRequest.prompt) {
+      void recordCloneAction({
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        url: requestBody.context?.targetUrl || requestBody.context?.sourceUrl || requestBody.prompt,
+        model: requestBody.model || appConfig.ai.defaultModel,
+        result: 'failed',
+        error: (error as Error).message,
+      }).catch((historyError) => console.error('[clone-history] Failed to record failure:', historyError));
+    }
     return NextResponse.json({ 
       success: false, 
       error: (error as Error).message 
