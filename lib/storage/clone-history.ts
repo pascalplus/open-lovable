@@ -53,3 +53,50 @@ export async function recordCloneAction(record: CloneActionRecord) {
 export async function getCloneHistory() {
   return readHistory();
 }
+
+export interface CloneResultFile {
+  path: string;
+  content: string;
+  type?: string;
+}
+
+export async function saveCloneResult(input: {
+  url: string;
+  model: string;
+  files: CloneResultFile[];
+  explanation?: string;
+}) {
+  const resultId = crypto.randomUUID();
+  const safePath = (filePath: string) => {
+    const normalized = filePath.replaceAll('\\\\', '/').replace(/^\\/+/, '');
+    const segments = normalized.split('/').filter((segment) => segment && segment !== '.' && segment !== '..');
+    return segments.length > 0 ? segments.join('/') : 'unnamed-file';
+  };
+  const prefix = `clone-results/${resultId}`;
+  const manifest = {
+    id: resultId,
+    createdAt: new Date().toISOString(),
+    url: input.url,
+    model: input.model,
+    explanation: input.explanation,
+    files: input.files.map(({ path, type }) => ({ path, type })),
+  };
+  const client = getClient();
+
+  await Promise.all([
+    client.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: `${prefix}/manifest.json`,
+      Body: JSON.stringify(manifest, null, 2),
+      ContentType: 'application/json',
+    })),
+    ...input.files.map((file) => client.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: `${prefix}/files/${safePath(file.path)}`,
+      Body: file.content,
+      ContentType: file.type === 'css' ? 'text/css' : file.type === 'json' ? 'application/json' : 'text/plain',
+    }))),
+  ]);
+
+  return { resultId, prefix, fileCount: input.files.length };
+}
