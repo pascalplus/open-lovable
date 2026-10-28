@@ -182,12 +182,6 @@ async function createEnvFile(projectPath, sandbox, answers) {
     envContent += `# GEMINI_API_KEY=your_gemini_api_key_here\n`;
   }
   
-  if (answers.groqApiKey) {
-    envContent += `GROQ_API_KEY=${answers.groqApiKey}\n`;
-  } else {
-    envContent += `# GROQ_API_KEY=your_groq_api_key_here\n`;
-  }
-  
   await fs.writeFile(path.join(projectPath, '.env'), envContent);
   await fs.writeFile(path.join(projectPath, '.env.example'), envContent.replace(/=.+/g, '=your_key_here'));
 }
@@ -222,8 +216,6 @@ async function createEnvExample(projectPath, sandbox) {
   envContent += `OPENAI_API_KEY=your_openai_api_key_here\n\n`;
   envContent += `# Get yours at https://aistudio.google.com/app/apikey\n`;
   envContent += `GEMINI_API_KEY=your_gemini_api_key_here\n\n`;
-  envContent += `# Get yours at https://console.groq.com\n`;
-  envContent += `GROQ_API_KEY=your_groq_api_key_here\n`;
   
   await fs.writeFile(path.join(projectPath, '.env.example'), envContent);
 }
