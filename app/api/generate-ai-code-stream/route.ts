@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createGroq } from '@ai-sdk/groq';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
@@ -20,14 +19,7 @@ const aiGatewayBaseURL = 'https://ai-gateway.vercel.sh/v1';
 
 console.log('[generate-ai-code-stream] AI Gateway config:', {
   isUsingAIGateway,
-  hasGroqKey: !!process.env.GROQ_API_KEY,
   hasAIGatewayKey: !!process.env.AI_GATEWAY_API_KEY
-});
-
-const groq = createGroq({
-  // Kimi must use Groq directly; do not route it through AI Gateway.
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: process.env.GROQ_BASE_URL,
 });
 
 const anthropic = createAnthropic({
@@ -1223,11 +1215,11 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
         const isGoogle = model.startsWith('google/');
         const isOpenAI = model.startsWith('openai/');
         const isOpenRouter = model === 'openrouter/free';
-        const isKimiGroq = model === 'moonshotai/kimi-k2-instruct-0905';
+        const isOpenRouterFree = model === 'openrouter/free';
         const modelProvider = isAnthropic ? anthropic :
                               (isOpenAI ? openai :
                               (isGoogle ? googleGenerativeAI :
-                              (isOpenRouter ? openrouter : groq)));
+                              openrouter));
         
         // Fix model name transformation for different providers
         let actualModel: string;
@@ -1235,9 +1227,6 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
           actualModel = model.replace('anthropic/', '');
         } else if (isOpenAI) {
           actualModel = model.replace('openai/', '');
-        } else if (isKimiGroq) {
-          // Kimi on Groq - use full model string
-          actualModel = 'moonshotai/kimi-k2-instruct-0905';
         } else if (isOpenRouter) {
           actualModel = 'openrouter/free';
         } else if (isGoogle) {
@@ -1247,7 +1236,7 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
           actualModel = model;
         }
 
-        console.log(`[generate-ai-code-stream] Using provider: ${isAnthropic ? 'Anthropic' : isGoogle ? 'Google' : isOpenAI ? 'OpenAI' : isOpenRouter ? 'OpenRouter' : 'Groq'}, model: ${actualModel}`);
+        console.log(`[generate-ai-code-stream] Using provider: ${isAnthropic ? 'Anthropic' : isGoogle ? 'Google' : isOpenAI ? 'OpenAI' : isOpenRouter ? 'OpenRouter' : 'AI Gateway'}, model: ${actualModel}`);
         console.log(`[generate-ai-code-stream] AI Gateway enabled: ${isUsingAIGateway}`);
         console.log(`[generate-ai-code-stream] Model string: ${model}`);
 
@@ -1316,7 +1305,7 @@ It's better to have 3 complete files than 10 incomplete files.`
           ],
           maxTokens: 8192, // Reduce to ensure completion
           stopSequences: [] // Don't stop early
-          // Note: Neither Groq nor Anthropic models support tool/function calling in this context
+          // Note: Anthropic models support tool/function calling differently in this context
           // We use XML tags for package detection instead
         };
         
@@ -1345,8 +1334,6 @@ It's better to have 3 complete files than 10 incomplete files.`
           } catch (streamError: any) {
             console.error(`[generate-ai-code-stream] Error calling streamText (attempt ${retryCount + 1}/${maxRetries + 1}):`, streamError);
             
-            // Check if this is a Groq service unavailable error
-            const isGroqServiceError = isKimiGroq && streamError.message?.includes('Service unavailable');
             const isRetryableError = streamError.message?.includes('Service unavailable') || 
                                     streamError.message?.includes('rate limit') ||
                                     streamError.message?.includes('timeout');
@@ -1364,17 +1351,11 @@ It's better to have 3 complete files than 10 incomplete files.`
               // Wait before retry with exponential backoff
               await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
               
-              // If Groq fails, retry once through OpenRouter's free router.
-              if (isKimiGroq && retryCount === maxRetries) {
-                console.log('[generate-ai-code-stream] Kimi/Groq request failed, falling back to OpenRouter free router');
-                streamOptions.model = openrouter('openrouter/free');
-                actualModel = 'openrouter/free';
-              }
             } else {
               // Final error, send to user
               await sendProgress({ 
                 type: 'error', 
-                message: `Failed to initialize ${isGoogle ? 'Gemini' : isAnthropic ? 'Claude' : isOpenAI ? 'GPT-5' : isKimiGroq ? 'Kimi (Groq)' : 'Groq'} streaming: ${streamError.message}` 
+                message: `Failed to initialize ${isGoogle ? 'Gemini' : isAnthropic ? 'Claude' : isOpenAI ? 'GPT-5' : 'AI Gateway'} streaming: ${streamError.message}` 
               });
               
               // If this is a Google model error, provide helpful info
@@ -1740,16 +1721,16 @@ Provide the complete file content without any truncation. Include all necessary 
                   completionClient = openai;
                 } else if (model.includes('claude')) {
                   completionClient = anthropic;
-                } else if (model === 'moonshotai/kimi-k2-instruct-0905') {
-                  completionClient = groq;
-                } else {
-                  completionClient = groq;
+      } else {
+        completionClient = openrouter;
+
                 }
                 
                 // Determine the correct model name for the completion
                 let completionModelName: string;
-                if (model === 'moonshotai/kimi-k2-instruct-0905') {
-                  completionModelName = 'moonshotai/kimi-k2-instruct-0905';
+      if (model === 'openrouter/free') {
+        completionModelName = 'openrouter/free';
+
                 } else if (model.includes('openai')) {
                   completionModelName = model.replace('openai/', '');
                 } else if (model.includes('anthropic')) {

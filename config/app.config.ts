@@ -51,12 +51,11 @@ export const appConfig = {
   // AI Model Configuration
   ai: {
     // Default AI model
-    defaultModel: 'moonshotai/kimi-k2-instruct-0905',
+    defaultModel: 'openrouter/free',
     
     // Available models
     availableModels: [
       'openai/gpt-5',
-      'moonshotai/kimi-k2-instruct-0905',
       'openrouter/free',
       'anthropic/claude-sonnet-4-20250514',
       'google/gemini-3-pro-preview'
@@ -65,7 +64,6 @@ export const appConfig = {
     // Model display names
     modelDisplayNames: {
       'openai/gpt-5': 'GPT-5',
-      'moonshotai/kimi-k2-instruct-0905': 'Kimi K2 (Groq)',
       'openrouter/free': 'OpenRouter / Free',
       'anthropic/claude-sonnet-4-20250514': 'Sonnet 4',
       'google/gemini-3-pro-preview': 'Gemini 3 Pro (Preview)'
@@ -73,10 +71,6 @@ export const appConfig = {
     
     // Model API configuration
     modelApiConfig: {
-      'moonshotai/kimi-k2-instruct-0905': {
-        provider: 'groq',
-        model: 'moonshotai/kimi-k2-instruct-0905'
-      },
       'openrouter/free': {
         provider: 'openrouter',
         model: 'openrouter/free',

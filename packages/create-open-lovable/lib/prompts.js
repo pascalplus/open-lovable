@@ -153,8 +153,7 @@ export function getEnvPrompts(provider) {
     choices: [
       { name: 'Anthropic (Claude)', value: 'anthropic' },
       { name: 'OpenAI (GPT)', value: 'openai' },
-      { name: 'Google (Gemini)', value: 'gemini' },
-      { name: 'Groq', value: 'groq' }
+      { name: 'Google (Gemini)', value: 'gemini' }
     ]
   });
 
@@ -177,13 +176,6 @@ export function getEnvPrompts(provider) {
     name: 'geminiApiKey',
     message: 'Gemini API key:',
     when: (answers) => answers.aiProviders && answers.aiProviders.includes('gemini')
-  });
-
-  prompts.push({
-    type: 'input',
-    name: 'groqApiKey',
-    message: 'Groq API key:',
-    when: (answers) => answers.aiProviders && answers.aiProviders.includes('groq')
   });
 
   return prompts;
