@@ -2026,6 +2026,30 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     });
                   }
                   
+                  const filesToSave = parsedFiles.length > 0 ? parsedFiles : generationProgress.files;
+                  if (filesToSave.length > 0) {
+                    void fetch('/api/clone-results', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        url: homeUrlInput || targetUrl || 'unknown',
+                        model: aiModel,
+                        files: filesToSave.map(({ path, content, type }) => ({ path, content, type })),
+                        explanation,
+                      }),
+                    })
+                      .then(async (saveResponse) => {
+                        if (!saveResponse.ok) {
+                          throw new Error(`S3 save failed with status ${saveResponse.status}`);
+                        }
+                        const saved = await saveResponse.json();
+                        console.log('[clone-results] Saved clone files to S3:', saved.resultId);
+                      })
+                      .catch((saveError) => {
+                        console.error('[clone-results] Failed to auto-save clone files:', saveError);
+                      });
+                  }
+
                   setGenerationProgress(prev => ({
                     ...prev,
                     status: `Generated ${parsedFiles.length > 0 ? parsedFiles.length : prev.files.length} file${(parsedFiles.length > 0 ? parsedFiles.length : prev.files.length) !== 1 ? 's' : ''}!`,
