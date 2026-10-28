@@ -1223,7 +1223,7 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
         const isGoogle = model.startsWith('google/');
         const isOpenAI = model.startsWith('openai/');
         const isOpenRouter = model === 'openrouter/free';
-        const isKimiGroq = model === 'moonshotai/kimi-k2-instruct-0905';
+        const isKimiGroq = model === 'llama-3.3-70b-versatile';
         const modelProvider = isAnthropic ? anthropic :
                               (isOpenAI ? openai :
                               (isGoogle ? googleGenerativeAI :
@@ -1237,7 +1237,7 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
           actualModel = model.replace('openai/', '');
         } else if (isKimiGroq) {
           // Kimi on Groq - use full model string
-          actualModel = 'moonshotai/kimi-k2-instruct-0905';
+          actualModel = 'llama-3.3-70b-versatile';
         } else if (isOpenRouter) {
           actualModel = 'openrouter/free';
         } else if (isGoogle) {
@@ -1740,7 +1740,7 @@ Provide the complete file content without any truncation. Include all necessary 
                   completionClient = openai;
                 } else if (model.includes('claude')) {
                   completionClient = anthropic;
-                } else if (model === 'moonshotai/kimi-k2-instruct-0905') {
+                } else if (model === 'llama-3.3-70b-versatile') {
                   completionClient = groq;
                 } else {
                   completionClient = groq;
@@ -1748,8 +1748,8 @@ Provide the complete file content without any truncation. Include all necessary 
                 
                 // Determine the correct model name for the completion
                 let completionModelName: string;
-                if (model === 'moonshotai/kimi-k2-instruct-0905') {
-                  completionModelName = 'moonshotai/kimi-k2-instruct-0905';
+                if (model === 'llama-3.3-70b-versatile') {
+                  completionModelName = 'llama-3.3-70b-versatile';
                 } else if (model.includes('openai')) {
                   completionModelName = model.replace('openai/', '');
                 } else if (model.includes('anthropic')) {

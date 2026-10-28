@@ -99,11 +99,11 @@ export function getProviderForModel(modelId: string): ProviderResolution {
   const isAnthropic = modelId.startsWith('anthropic/');
   const isOpenAI = modelId.startsWith('openai/');
   const isGoogle = modelId.startsWith('google/');
-  const isKimiGroq = modelId === 'moonshotai/kimi-k2-instruct-0905';
+  const isKimiGroq = modelId === 'llama-3.3-70b-versatile';
 
   if (isKimiGroq) {
     const client = getOrCreateClient('groq');
-    return { client, actualModel: 'moonshotai/kimi-k2-instruct-0905' };
+    return { client, actualModel: 'llama-3.3-70b-versatile' };
   }
 
   if (isAnthropic) {
