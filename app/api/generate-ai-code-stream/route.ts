@@ -90,7 +90,7 @@ declare global {
 export async function POST(request: NextRequest) {
   let cloneRequest: { prompt?: string; model?: string; context?: { targetUrl?: string; sourceUrl?: string } } = {};
   try {
-    const { prompt, model = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
+    let { prompt, model = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
     cloneRequest = { prompt, model, context };
     
     console.log('[generate-ai-code-stream] Received request:');
@@ -1339,46 +1339,61 @@ It's better to have 3 complete files than 10 incomplete files.`
         let result;
         let retryCount = 0;
         const maxRetries = 2;
-        
+        const attemptedModels = new Set([model]);
+        const fallbackModels = appConfig.ai.availableModels.filter((candidate) => candidate !== model);
+
         while (retryCount <= maxRetries) {
           try {
             result = await streamText(streamOptions);
             break; // Success, exit retry loop
           } catch (streamError: any) {
-            console.error(`[generate-ai-code-stream] Error calling streamText (attempt ${retryCount + 1}/${maxRetries + 1}):`, streamError);
-            
-            const isRetryableError = streamError.message?.includes('Service unavailable') || 
-                                    streamError.message?.includes('rate limit') ||
-                                    streamError.message?.includes('timeout');
-            
+            console.error(`[generate-ai-code-stream] Error calling streamText (attempt ${retryCount + 1}/${maxRetries + 1}, model ${model}):`, streamError);
+
+            const errorMessage = String(streamError?.message || '').toLowerCase();
+            const isRetryableError = errorMessage.includes('service unavailable') ||
+              errorMessage.includes('rate limit') ||
+              errorMessage.includes('timeout') ||
+              errorMessage.includes('temporarily') ||
+              errorMessage.includes('overloaded') ||
+              errorMessage.includes('quota');
+
             if (retryCount < maxRetries && isRetryableError) {
               retryCount++;
-              console.log(`[generate-ai-code-stream] Retrying in ${retryCount * 2} seconds...`);
-              
-              // Send progress update about retry
-              await sendProgress({ 
-                type: 'info', 
-                message: `Service temporarily unavailable, retrying (attempt ${retryCount + 1}/${maxRetries + 1})...` 
-              });
-              
-              // Wait before retry with exponential backoff
-              await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
-              
-            } else {
-              // Final error, send to user
-              await sendProgress({ 
-                type: 'error', 
-                message: `Failed to initialize ${isGoogle ? 'Gemini' : isAnthropic ? 'Claude' : isOpenAI ? 'GPT-5' : 'AI Gateway'} streaming: ${streamError.message}` 
-              });
-              
-              // If this is a Google model error, provide helpful info
-              if (isGoogle) {
-                await sendProgress({ 
-                  type: 'info', 
-                  message: 'Tip: Make sure your GEMINI_API_KEY is set correctly and has proper permissions.' 
-                });
+              const availableFallbacks = fallbackModels.filter((candidate) => !attemptedModels.has(candidate));
+              const fallbackModel = availableFallbacks.length > 0
+                ? availableFallbacks[Math.floor(Math.random() * availableFallbacks.length)]
+                : model;
+              attemptedModels.add(fallbackModel);
+
+              if (fallbackModel !== model) {
+                const fallbackIsAnthropic = fallbackModel.startsWith('anthropic/');
+                const fallbackIsGoogle = fallbackModel.startsWith('google/');
+                const fallbackIsOpenAI = fallbackModel.startsWith('openai/');
+                const fallbackIsOpenRouter = fallbackModel === 'openrouter/free';
+                const fallbackProvider = fallbackIsAnthropic ? anthropic :
+                  fallbackIsOpenAI ? openai :
+                  fallbackIsGoogle ? googleGenerativeAI :
+                  fallbackIsOpenRouter ? openrouter :
+                  openai;
+                const fallbackActualModel = fallbackIsAnthropic || fallbackIsOpenAI || fallbackIsGoogle
+                  ? fallbackModel.replace(/^[^/]+\\//, '')
+                  : fallbackModel;
+                streamOptions.model = fallbackProvider(fallbackActualModel);
+                model = fallbackModel;
+                console.log(`[generate-ai-code-stream] Failing over to ${fallbackModel}`);
               }
-              
+
+              console.log(`[generate-ai-code-stream] Retrying in ${retryCount * 2} seconds...`);
+              await sendProgress({
+                type: 'info',
+                message: `Provider failed; retrying with ${model} (attempt ${retryCount + 1}/${maxRetries + 1})...`
+              });
+              await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+            } else {
+              await sendProgress({
+                type: 'error',
+                message: `Failed to initialize AI streaming after trying ${attemptedModels.size} model(s): ${streamError.message}`
+              });
               throw streamError;
             }
           }
