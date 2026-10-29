@@ -21,7 +21,7 @@ const aiGatewayBaseURL = 'https://ai-gateway.vercel.sh/v1';
 const isUsingAIGateway = !!aiGatewayApiKey;
 
 function usesAIGateway(provider: ProviderName): boolean {
-  // Kimi and OpenRouter are intentionally direct, never routed through AI Gateway.
+  // Route configured first-party models through Vercel AI Gateway; keep OpenRouter direct.
   return isUsingAIGateway && provider !== 'openrouter';
 }
 
