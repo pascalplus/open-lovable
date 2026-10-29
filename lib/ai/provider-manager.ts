@@ -107,9 +107,9 @@ export function getProviderForModel(modelId: string): ProviderResolution {
     return { client, actualModel: modelId.replace('google/', '') };
   }
 
-  // Default fallback: call OpenRouter directly with its free router.
-  const client = getOrCreateClient('openrouter');
-  return { client, actualModel: 'openrouter/free' };
+  // Unknown model IDs are routed through the configured AI Gateway client.
+  const client = getOrCreateClient('openai');
+  return { client, actualModel: modelId || appConfig.ai.defaultModel };
 }
 
 export default getProviderForModel;

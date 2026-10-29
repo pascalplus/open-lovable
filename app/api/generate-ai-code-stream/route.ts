@@ -1904,8 +1904,8 @@ Provide the complete file content without any truncation. Include all necessary 
       void recordCloneAction({
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
-        url: requestBody.context?.targetUrl || requestBody.context?.sourceUrl || requestBody.prompt,
-        model: requestBody.model || appConfig.ai.defaultModel,
+        url: context?.targetUrl || context?.sourceUrl || prompt,
+        model: model || appConfig.ai.defaultModel,
         result: 'failed',
         error: (error as Error).message,
       }).catch((historyError) => console.error('[clone-history] Failed to record failure:', historyError));
