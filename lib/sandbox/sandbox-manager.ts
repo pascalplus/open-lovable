@@ -141,7 +141,9 @@ class SandboxManager {
   }
 
   /**
-   * Clean up old sandboxes (older than maxAge milliseconds)
+   * Explicitly clean up old sandboxes (older than maxAge milliseconds).
+   * This is intentionally never scheduled automatically: idle sandboxes may
+   * be paused by the platform, but they must not be terminated by the app.
    */
   async cleanup(maxAge: number = 3600000): Promise<void> {
     const now = new Date();

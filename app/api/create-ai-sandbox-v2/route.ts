@@ -16,20 +16,10 @@ export async function POST() {
   try {
     console.log('[create-ai-sandbox-v2] Creating sandbox...');
     
-    // Clean up all existing sandboxes
-    console.log('[create-ai-sandbox-v2] Cleaning up existing sandboxes...');
-    await sandboxManager.terminateAll();
-    
-    // Also clean up legacy global state
-    if (global.activeSandboxProvider) {
-      try {
-        await global.activeSandboxProvider.terminate();
-      } catch (e) {
-        console.error('Failed to terminate legacy global sandbox:', e);
-      }
-      global.activeSandboxProvider = null;
-    }
-    
+    // Keep existing sandboxes alive. Vercel may auto-pause an idle sandbox,
+    // but creating a new session must not terminate a completed scrape.
+    console.log('[create-ai-sandbox-v2] Preserving existing sandbox lifecycle...');
+
     // Clear existing files tracking
     if (global.existingFiles) {
       global.existingFiles.clear();
@@ -81,17 +71,9 @@ export async function POST() {
   } catch (error) {
     console.error('[create-ai-sandbox-v2] Error:', error);
     
-    // Clean up on error
-    await sandboxManager.terminateAll();
-    if (global.activeSandboxProvider) {
-      try {
-        await global.activeSandboxProvider.terminate();
-      } catch (e) {
-        console.error('Failed to terminate sandbox on error:', e);
-      }
-      global.activeSandboxProvider = null;
-    }
-    
+    // Do not terminate existing or partially-created sandboxes on request
+    // failure. They remain available for inspection or explicit cleanup.
+
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Failed to create sandbox',

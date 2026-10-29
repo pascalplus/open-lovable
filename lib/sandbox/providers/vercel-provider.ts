@@ -8,15 +8,8 @@ export class VercelProvider extends SandboxProvider {
   async createSandbox(): Promise<SandboxInfo> {
     try {
       
-      // Kill existing sandbox if any
-      if (this.sandbox) {
-        try {
-          await this.sandbox.stop();
-        } catch (e) {
-          console.error('Failed to stop existing sandbox:', e);
-        }
-        this.sandbox = null;
-      }
+      // Sandbox lifecycle is managed by the platform or explicit user action.
+      // Do not stop an existing sandbox automatically during creation.
       
       // Clear existing files tracking
       this.existingFiles.clear();
@@ -24,7 +17,6 @@ export class VercelProvider extends SandboxProvider {
       // Create Vercel sandbox
       
       const sandboxConfig: any = {
-        timeout: 300000, // 5 minutes in ms
         runtime: 'node22', // Use node22 runtime for Vercel sandboxes
         ports: [5173] // Vite port
       };
