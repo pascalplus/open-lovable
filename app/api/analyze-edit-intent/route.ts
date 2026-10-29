@@ -20,8 +20,8 @@ const openai = createOpenAI({
   baseURL: isUsingAIGateway ? aiGatewayBaseURL : process.env.OPENAI_BASE_URL,
 });
 
-const openrouter = createOpenAI({
-  apiKey: isUsingAIGateway ? process.env.AI_GATEWAY_API_KEY : process.env.OPENROUTER_API_KEY,
+const aiGatewayClient = createOpenAI({
+  apiKey: process.env.AI_GATEWAY_API_KEY ?? process.env.OPENROUTER_API_KEY,
   baseURL: isUsingAIGateway ? aiGatewayBaseURL : 'https://openrouter.ai/api/v1',
 });
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       aiModel = anthropic(model.replace('anthropic/', ''));
     } else if (model.startsWith('openai/')) {
       if (model.includes('gpt-oss')) {
-        aiModel = openrouter(model);
+        aiModel = aiGatewayClient(model);
       } else {
         aiModel = openai(model.replace('openai/', ''));
       }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       aiModel = googleGenerativeAI(model.replace('google/', ''));
     } else {
       // Default to OpenRouter if model format is unclear
-      aiModel = openrouter(model);
+      aiModel = aiGatewayClient(model);
     }
     
     console.log('[analyze-edit-intent] Using AI model:', model);
