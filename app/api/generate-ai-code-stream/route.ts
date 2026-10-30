@@ -1376,7 +1376,7 @@ It's better to have 3 complete files than 10 incomplete files.`
                   fallbackIsOpenRouter ? openrouter :
                   openai;
                 const fallbackActualModel = fallbackIsAnthropic || fallbackIsOpenAI || fallbackIsGoogle
-                  ? fallbackModel.replace(/^[^/]+\\//, '')
+                  ? fallbackModel.replace(/^[^/]+\//, '')
                   : fallbackModel;
                 streamOptions.model = fallbackProvider(fallbackActualModel);
                 model = fallbackModel;
