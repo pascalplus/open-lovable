@@ -51,24 +51,22 @@ export const appConfig = {
   // AI Model Configuration
   ai: {
     // Default AI model
-    defaultModel: 'moonshotai/kimi-k3.1-pro',
+    defaultModel: 'openai/gpt-5.4',
     
     // Available models
     availableModels: [
       'openai/gpt-5',
       'openrouter/free',
-      'moonshotai/kimi-k3.1-pro',
-      'anthropic/claude-sonnet-4-20250514',
-      'google/gemini-3-pro-preview'
+      'anthropic/claude-sonnet-4.6',
+      'google/gemini-3.1-pro-preview'
     ],
     
     // Model display names
     modelDisplayNames: {
       'openai/gpt-5': 'GPT-5',
       'openrouter/free': 'OpenRouter / Free',
-      'moonshotai/kimi-k3.1-pro': 'Kimi K3.1 Pro (Vercel AI Gateway)',
-      'anthropic/claude-sonnet-4-20250514': 'Sonnet 4',
-      'google/gemini-3-pro-preview': 'Gemini 3 Pro (Preview)'
+      'anthropic/claude-sonnet-4.6': 'Sonnet 4.6',
+      'google/gemini-3.1-pro-preview': 'Gemini 3.1 Pro (Preview)'
     } as Record<string, string>,
     
     // Model API configuration
@@ -79,9 +77,9 @@ export const appConfig = {
         apiKey: process.env.OPENROUTER_API_KEY,
         baseURL: 'https://openrouter.ai/api/v1'
       },
-      'moonshotai/kimi-k3.1-pro': {
+'openai/gpt-5.4': {
         provider: 'openai',
-        model: 'moonshotai/kimi-k3.1-pro',
+        model: 'openai/gpt-5.4',
         apiKey: process.env.AI_GATEWAY_API_KEY,
         baseURL: 'https://ai-gateway.vercel.sh/v1'
       }

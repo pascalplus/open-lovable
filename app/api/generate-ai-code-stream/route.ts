@@ -23,15 +23,21 @@ console.log('[generate-ai-code-stream] AI Gateway config:', {
   hasAIGatewayKey: !!process.env.AI_GATEWAY_API_KEY
 });
 
-const anthropic = createAnthropic({
-  apiKey: process.env.AI_GATEWAY_API_KEY ?? process.env.ANTHROPIC_API_KEY,
-  baseURL: isUsingAIGateway ? aiGatewayBaseURL : (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com/v1'),
-});
+// AI Gateway exposes an OpenAI-compatible API. Use the OpenAI adapter there so
+// provider/model IDs remain intact (for example, anthropic/claude-sonnet-4.6).
+const anthropic = isUsingAIGateway
+  ? createOpenAI({ apiKey: process.env.AI_GATEWAY_API_KEY, baseURL: aiGatewayBaseURL })
+  : createAnthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      baseURL: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com/v1',
+    });
 
-const googleGenerativeAI = createGoogleGenerativeAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY ?? process.env.GEMINI_API_KEY,
-  baseURL: isUsingAIGateway ? aiGatewayBaseURL : undefined,
-});
+const googleGenerativeAI = isUsingAIGateway
+  ? createOpenAI({ apiKey: process.env.AI_GATEWAY_API_KEY, baseURL: aiGatewayBaseURL })
+  : createGoogleGenerativeAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: process.env.GEMINI_BASE_URL,
+    });
 
 const openai = createOpenAI({
   apiKey: process.env.AI_GATEWAY_API_KEY ?? process.env.OPENAI_API_KEY,
@@ -1234,16 +1240,18 @@ MORPH FAST APPLY MODE (EDIT-ONLY):
                               (isGoogle ? googleGenerativeAI :
                               openrouter));
         
-        // Fix model name transformation for different providers
+        // Gateway routing requires the fully-qualified provider/model ID.
+        // Direct provider adapters continue to receive provider-local names.
         let actualModel: string;
-        if (isAnthropic) {
+        if (isUsingAIGateway && !isOpenRouter) {
+          actualModel = model;
+        } else if (isAnthropic) {
           actualModel = model.replace('anthropic/', '');
         } else if (isOpenAI) {
           actualModel = model.replace('openai/', '');
         } else if (isOpenRouter) {
           actualModel = 'openrouter/free';
         } else if (isGoogle) {
-          // Google uses specific model names - convert our naming to theirs  
           actualModel = model.replace('google/', '');
         } else {
           actualModel = model;
