@@ -96,7 +96,17 @@ declare global {
 export async function POST(request: NextRequest) {
   let cloneRequest: { prompt?: string; model?: string; context?: { targetUrl?: string; sourceUrl?: string } } = {};
   try {
-    const { prompt, model = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
+    const { prompt, model: requestedModel = appConfig.ai.defaultModel, context, isEdit = false } = await request.json();
+    // The Vercel AI Gateway free tier rejects paid/restricted models with 403.
+    // Keep clone generation usable in preview by routing those requests through
+    // the configured free OpenRouter model when no paid credits are available.
+    let model = requestedModel;
+    if (isUsingAIGateway && model !== 'openrouter/free') {
+      console.warn('[generate-ai-code-stream] Gateway model may require paid credits; using openrouter/free fallback', {
+        requestedModel: model,
+      });
+      model = 'openrouter/free';
+    }
     cloneRequest = { prompt, model, context };
     
     console.log('[generate-ai-code-stream] Received request:');

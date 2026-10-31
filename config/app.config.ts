@@ -51,7 +51,7 @@ export const appConfig = {
   // AI Model Configuration
   ai: {
     // Default AI model
-    defaultModel: 'openai/gpt-5.4',
+    defaultModel: 'openrouter/free',
     
     // Available models
     availableModels: [
