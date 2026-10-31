@@ -3214,6 +3214,25 @@ Focus on the key sections and content, making it clean and modern.`;
             }
           }
         }
+
+        // A streamed response may end without a trailing newline. Process the
+        // final SSE event so the completion payload is not silently discarded.
+        const finalLine = pendingSseBuffer.trimEnd();
+        if (finalLine.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(finalLine.slice(6));
+            if (data.type === 'complete') {
+              generatedCode = data.generatedCode || '';
+              explanation = data.explanation || '';
+              setConversationContext(prev => ({
+                ...prev,
+                lastGeneratedCode: generatedCode
+              }));
+            }
+          } catch (error) {
+            console.error('[clone] Failed to parse final SSE event:', error);
+          }
+        }
         
         setGenerationProgress(prev => ({
           ...prev,
